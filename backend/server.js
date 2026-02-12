@@ -2,9 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const db = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Import routes et middleware
+const authRoutes = require('./routes/auth');
+const { authenticateToken, requireRole } = require('./middleware/auth');
 
 // Middleware
 app.use(cors());
@@ -19,13 +24,43 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'GG.Shop API is running' });
 });
 
-// Route pour les produits (exemple)
-app.get('/api/products', (req, res) => {
+// Routes d'authentification
+app.use('/api/auth', authRoutes);
+
+// Route pour les produits (accessible à tous après authentification)
+app.get('/api/products', authenticateToken, (req, res) => {
+  const products = [
+    { id: 1, name: 'Prediction Pack Premium', price: 49.99, category: 'esports' },
+    { id: 2, name: 'Analyse Match CS2', price: 29.99, category: 'csgo' },
+    { id: 3, name: 'Pack LoL Championship', price: 79.99, category: 'lol' }
+  ];
+
   res.json({
-    products: [
-      { id: 1, name: 'Prediction Pack Premium', price: 49.99, category: 'esports' },
-      { id: 2, name: 'Analyse Match CS2', price: 29.99, category: 'csgo' },
-      { id: 3, name: 'Pack LoL Championship', price: 79.99, category: 'lol' }
+    products,
+    userRole: req.user.role,
+    canPurchase: req.user.role === 'connecté' || req.user.role === 'admin'
+  });
+});
+
+// Route d'achat (seulement pour les utilisateurs connectés et admin)
+app.post('/api/purchase', authenticateToken, requireRole('connecté', 'admin'), (req, res) => {
+  const { productId } = req.body;
+  
+  res.json({
+    success: true,
+    message: 'Achat réussi',
+    productId,
+    user: req.user.username,
+    role: req.user.role
+  });
+});
+
+// Route admin seulement
+app.get('/api/admin/users', authenticateToken, requireRole('admin'), (req, res) => {
+  res.json({
+    message: 'Liste des utilisateurs (route admin)',
+    users: [
+      { id: 1, username: 'Admin', role: 'admin' }
     ]
   });
 });

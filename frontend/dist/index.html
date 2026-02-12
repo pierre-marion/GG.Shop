@@ -39,12 +39,35 @@
 
                 <!-- Icons -->
                 <div class="flex items-center space-x-6">
-                    <button class="text-white hover:text-primary">
+                    <a href="cart.html" class="text-white hover:text-primary relative" id="cartBtn">
                         <i class="fas fa-shopping-cart text-xl"></i>
-                    </button>
-                    <button class="text-white hover:text-primary">
-                        <i class="fas fa-user-circle text-xl"></i>
-                    </button>
+                        <span id="cartCount" class="hidden absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </a>
+                    
+                    <!-- Auth buttons -->
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <!-- Bouttons pour non connectés -->
+                        <div id="guestButtons" class="flex items-center space-x-3">
+                            <a href="login.html" class="text-white hover:text-primary transition-colors">
+                                <i class="fas fa-sign-in-alt mr-1"></i>Connexion
+                            </a>
+                            <a href="register.html" class="btn-primary py-2 px-4 text-sm">
+                                S'inscrire
+                            </a>
+                        </div>
+                        
+                        <!-- Boutons pour connectés -->
+                        <div id="userButtons" class="hidden flex items-center space-x-4">
+                            <div class="text-white">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span id="username" class="font-medium"></span>
+                                <span id="userRole" class="ml-2 px-2 py-1 text-xs rounded-full"></span>
+                            </div>
+                            <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -143,12 +166,12 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- Product Card 1 -->
-                <div class="product-card">
+                <a href="product-detail.html?id=1" class="product-card block">
                     <div class="bg-gray-200 h-64 flex items-center justify-center rounded-t-3xl">
                         <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400" alt="Product" class="w-full h-full object-cover">
                     </div>
                     <div class="p-5 space-y-3">
-                        <h3 class="font-semibold text-lg">T-shirt avec Détails Tape</h3>
+                        <h3 class="font-semibold text-lg">T-shirt à Col Dégradé</h3>
                         <div class="flex items-center gap-1">
                             <i class="fas fa-star star-rating text-sm"></i>
                             <i class="fas fa-star star-rating text-sm"></i>
@@ -158,13 +181,15 @@
                             <span class="text-sm text-gray-400 ml-1">4.5/5</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="text-2xl font-bold">$120</span>
+                            <span class="text-2xl font-bold">$212</span>
+                            <span class="text-gray-400 line-through">$242</span>
+                            <span class="text-primary text-sm bg-primary/20 px-2 py-1 rounded-full">-20%</span>
                         </div>
                     </div>
-                </div>
+                </a>
 
                 <!-- Product Card 2 -->
-                <div class="product-card">
+                <a href="product-detail.html?id=2" class="product-card block">
                     <div class="bg-gray-200 h-64 flex items-center justify-center rounded-t-3xl">
                         <img src="https://images.unsplash.com/photo-1542272604-787c3835535d?w=400" alt="Product" class="w-full h-full object-cover">
                     </div>
@@ -184,10 +209,10 @@
                             <span class="text-primary text-sm bg-primary/20 px-2 py-1 rounded-full">-20%</span>
                         </div>
                     </div>
-                </div>
+                </a>
 
                 <!-- Product Card 3 -->
-                <div class="product-card">
+                <a href="product-detail.html?id=3" class="product-card block">
                     <div class="bg-gray-200 h-64 flex items-center justify-center rounded-t-3xl">
                         <img src="https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400" alt="Product" class="w-full h-full object-cover">
                     </div>
@@ -205,10 +230,10 @@
                             <span class="text-2xl font-bold">$180</span>
                         </div>
                     </div>
-                </div>
+                </a>
 
                 <!-- Product Card 4 -->
-                <div class="product-card">
+                <a href="product-detail.html?id=4" class="product-card block">
                     <div class="bg-gray-200 h-64 flex items-center justify-center rounded-t-3xl">
                         <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400" alt="Product" class="w-full h-full object-cover">
                     </div>
@@ -228,7 +253,7 @@
                             <span class="text-primary text-sm bg-primary/20 px-2 py-1 rounded-full">-30%</span>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             <div class="text-center mt-16">
@@ -562,9 +587,60 @@
         </div>
     </footer>
 
+    <script src="auth.js"></script>
     <script>
-        // Simple cart functionality placeholder
+        // Gestion de l'authentification dans la page
+        function updateUI() {
+            const guestButtons = document.getElementById('guestButtons');
+            const userButtons = document.getElementById('userButtons');
+            const username = document.getElementById('username');
+            const userRole = document.getElementById('userRole');
+
+            if (auth.isAuthenticated()) {
+                // Utilisateur connecté
+                guestButtons.classList.add('hidden');
+                userButtons.classList.remove('hidden');
+                username.textContent = auth.user.username;
+                
+                // Affichage du rôle avec des couleurs
+                const role = auth.getRole();
+                userRole.textContent = role;
+                
+                if (role === 'admin') {
+                    userRole.className = 'ml-2 px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400 border border-red-500/30';
+                } else if (role === 'connecté') {
+                    userRole.className = 'ml-2 px-2 py-1 text-xs rounded-full bg-primary/20 text-primary border border-primary/30';
+                }
+            } else {
+                // Visiteur
+                guestButtons.classList.remove('hidden');
+                userButtons.classList.add('hidden');
+            }
+        }
+
+        // Bouton de déconnexion
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                auth.logout();
+            }
+        });
+
+        // Gestion du bouton panier
+        document.getElementById('cartBtn')?.addEventListener('click', () => {
+            if (!auth.canPurchase()) {
+                alert('Vous devez être connecté pour acheter des produits. Rôle actuel: ' + auth.getRole());
+                window.location.href = 'login.html';
+            } else {
+                alert('Fonctionnalité panier à venir ! Votre rôle: ' + auth.getRole());
+            }
+        });
+
+        // Initialiser l'UI au chargement de la page
+        updateUI();
+
         console.log('GG.Shop loaded successfully!');
+        console.log('Rôle actuel:', auth.getRole());
     </script>
+    <script src="js/cart-counter.js"></script>
 </body>
 </html>

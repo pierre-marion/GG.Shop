@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panier - GG.SHOP</title>
+    <link rel="stylesheet" href="output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark">
+    <!-- Header -->
+    <header class="bg-dark/95 backdrop-blur-md border-b border-dark-lighter sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-12">
+                    <a href="index.html" class="text-3xl font-display font-bold text-white hover:text-primary transition-colors duration-300">GG.SHOP</a>
+                    
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a href="index.html" class="navbar-link">Accueil</a>
+                        <a href="#" class="navbar-link">En vente</a>
+                        <a href="#" class="navbar-link">Collections</a>
+                    </nav>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <a href="cart.html" class="text-white hover:text-primary relative">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cartCount" class="hidden absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </a>
+                    
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <div id="guestButtons" class="flex items-center space-x-3">
+                            <a href="login.html" class="text-white hover:text-primary transition-colors">
+                                <i class="fas fa-sign-in-alt mr-1"></i>Connexion
+                            </a>
+                            <a href="register.html" class="btn-primary py-2 px-4 text-sm">
+                                S'inscrire
+                            </a>
+                        </div>
+                        
+                        <div id="userButtons" class="hidden flex items-center space-x-4">
+                            <div class="text-white">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span id="username" class="font-medium"></span>
+                                <span id="userRole" class="ml-2 px-2 py-1 text-xs rounded-full"></span>
+                            </div>
+                            <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="container mx-auto px-6 py-6">
+        <div class="flex items-center gap-2 text-sm text-gray-400">
+            <a href="index.html" class="hover:text-primary">Accueil</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-white">Panier</span>
+        </div>
+    </div>
+
+    <!-- Cart Section -->
+    <section class="container mx-auto px-6 py-12 min-h-screen">
+        <h1 class="text-4xl md:text-5xl font-display font-bold text-white mb-12">VOTRE PANIER</h1>
+
+        <!-- Empty Cart Message -->
+        <div id="emptyCart" class="hidden text-center py-20">
+            <i class="fas fa-shopping-cart text-8xl text-gray-600 mb-6"></i>
+            <h2 class="text-2xl font-bold text-white mb-4">Votre panier est vide</h2>
+            <p class="text-gray-400 mb-8">Découvrez nos produits et ajoutez vos articles préférés !</p>
+            <a href="index.html" class="btn-primary inline-block">
+                <i class="fas fa-arrow-left mr-2"></i>Continuer vos achats
+            </a>
+        </div>
+
+        <!-- Cart Content -->
+        <div id="cartContent" class="grid lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2 space-y-6" id="cartItems">
+                <!-- Items will be inserted here by JavaScript -->
+            </div>
+
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-dark-light rounded-3xl p-8 sticky top-24 space-y-6">
+                    <h2 class="text-2xl font-display font-bold text-white mb-6">Résumé de la commande</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-gray-300">
+                            <span>Sous-total (<span id="itemCount">0</span> articles)</span>
+                            <span id="subtotal">$0</span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-300">
+                            <span>Réduction</span>
+                            <span class="text-primary" id="discount">-$0</span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-300">
+                            <span>Frais de livraison</span>
+                            <span id="shipping" class="text-green-500">Gratuit</span>
+                        </div>
+                        
+                        <hr class="border-dark-lighter">
+                        
+                        <div class="flex justify-between text-xl font-bold text-white">
+                            <span>Total</span>
+                            <span id="total">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Promo Code -->
+                    <div class="space-y-3">
+                        <div class="flex gap-3">
+                            <input 
+                                type="text" 
+                                id="promoCode" 
+                                placeholder="Code promo"
+                                class="flex-1 bg-dark text-white px-4 py-3 rounded-full border border-dark-lighter focus:border-primary focus:outline-none"
+                            >
+                            <button id="applyPromo" class="btn-secondary px-6 whitespace-nowrap">
+                                Appliquer
+                            </button>
+                        </div>
+                        <p id="promoMessage" class="text-sm hidden"></p>
+                    </div>
+
+                    <!-- Checkout Button -->
+                    <button id="checkoutBtn" class="w-full btn-primary py-4 text-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-lock"></i>
+                        Passer la commande
+                    </button>
+
+                    <!-- Role Warning -->
+                    <div id="roleWarning" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 text-yellow-400 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span id="roleWarningText"></span>
+                    </div>
+
+                    <!-- Continue Shopping -->
+                    <a href="index.html" class="block text-center text-gray-400 hover:text-primary transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Continuer vos achats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark-light py-12 mt-20">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <p>&copy; 2026 GG.Shop. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script src="js/cart.js"></script>
+</body>
+</html>

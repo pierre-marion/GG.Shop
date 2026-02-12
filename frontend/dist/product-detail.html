@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Produit - GG.SHOP</title>
+    <link rel="stylesheet" href="output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark">
+    <!-- Header -->
+    <header class="bg-dark/95 backdrop-blur-md border-b border-dark-lighter sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-12">
+                    <a href="index.html" class="text-3xl font-display font-bold text-white hover:text-primary transition-colors duration-300">GG.SHOP</a>
+                    
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a href="index.html" class="navbar-link">Accueil</a>
+                        <a href="#" class="navbar-link">En vente</a>
+                        <a href="#" class="navbar-link">Collections</a>
+                    </nav>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <a href="cart.html" class="text-white hover:text-primary relative">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cartCount" class="hidden absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </a>
+                    
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <div id="guestButtons" class="flex items-center space-x-3">
+                            <a href="login.html" class="text-white hover:text-primary transition-colors">
+                                <i class="fas fa-sign-in-alt mr-1"></i>Connexion
+                            </a>
+                            <a href="register.html" class="btn-primary py-2 px-4 text-sm">
+                                S'inscrire
+                            </a>
+                        </div>
+                        
+                        <div id="userButtons" class="hidden flex items-center space-x-4">
+                            <div class="text-white">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span id="username" class="font-medium"></span>
+                                <span id="userRole" class="ml-2 px-2 py-1 text-xs rounded-full"></span>
+                            </div>
+                            <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="container mx-auto px-6 py-6">
+        <div class="flex items-center gap-2 text-sm text-gray-400">
+            <a href="index.html" class="hover:text-primary">Accueil</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span id="breadcrumbCategory">Shop</span>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-white" id="breadcrumbProduct">Produit</span>
+        </div>
+    </div>
+
+    <!-- Product Detail Section -->
+    <section class="container mx-auto px-6 py-12">
+        <div class="grid lg:grid-cols-2 gap-12">
+            <!-- Images Gallery -->
+            <div class="space-y-4">
+                <!-- Main Image -->
+                <div class="bg-dark-light rounded-3xl overflow-hidden aspect-square relative group">
+                    <img id="mainImage" src="" alt="Produit" class="w-full h-full object-cover">
+                    <button class="absolute top-4 right-4 bg-white/90 hover:bg-white p-3 rounded-full transition-all">
+                        <i class="far fa-heart text-xl text-dark"></i>
+                    </button>
+                </div>
+
+                <!-- Thumbnail Images -->
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="thumbnail-img bg-dark-light rounded-2xl overflow-hidden aspect-square cursor-pointer hover:ring-2 ring-primary transition-all">
+                        <img src="" alt="Vue 1" class="w-full h-full object-cover">
+                    </div>
+                    <div class="thumbnail-img bg-dark-light rounded-2xl overflow-hidden aspect-square cursor-pointer hover:ring-2 ring-primary transition-all">
+                        <img src="" alt="Vue 2" class="w-full h-full object-cover">
+                    </div>
+                    <div class="thumbnail-img bg-dark-light rounded-2xl overflow-hidden aspect-square cursor-pointer hover:ring-2 ring-primary transition-all">
+                        <img src="" alt="Vue 3" class="w-full h-full object-cover">
+                    </div>
+                    <div class="thumbnail-img bg-dark-light rounded-2xl overflow-hidden aspect-square cursor-pointer hover:ring-2 ring-primary transition-all">
+                        <img src="" alt="Vue 4" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="space-y-6">
+                <div>
+                    <h1 id="productName" class="text-4xl font-display font-bold text-white mb-3">Chargement...</h1>
+                    
+                    <!-- Rating -->
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex items-center gap-1" id="starsContainer">
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star-half-alt text-yellow-400"></i>
+                        </div>
+                        <span class="text-gray-400" id="ratingText">4.5/5</span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="flex items-center gap-4 mb-6">
+                        <span id="currentPrice" class="text-4xl font-bold text-white">$212</span>
+                        <span id="oldPrice" class="text-2xl text-gray-400 line-through"></span>
+                        <span id="discount" class="text-primary text-sm bg-primary/20 px-3 py-1 rounded-full"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <p id="productDescription" class="text-gray-300 leading-relaxed pb-6 border-b border-dark-lighter">
+                        Ce produit combine style et confort pour un look parfait en toutes circonstances. Fabriqué avec des matériaux de haute qualité pour une durabilité exceptionnelle.
+                    </p>
+                </div>
+
+                <!-- Color Selection -->
+                <div class="space-y-4">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider">Sélectionnez une couleur</h3>
+                    <div class="flex gap-3" id="colorOptions">
+                        <button class="color-option w-12 h-12 rounded-full bg-green-700 border-2 border-transparent hover:border-white transition-all" data-color="Vert Olive"></button>
+                        <button class="color-option w-12 h-12 rounded-full bg-gray-800 border-2 border-transparent hover:border-white transition-all" data-color="Noir"></button>
+                        <button class="color-option w-12 h-12 rounded-full bg-blue-900 border-2 border-transparent hover:border-white transition-all" data-color="Bleu Marine"></button>
+                    </div>
+                    <p class="text-sm text-gray-400">Couleur sélectionnée: <span id="selectedColor" class="text-white font-medium">Vert Olive</span></p>
+                </div>
+
+                <hr class="border-dark-lighter">
+
+                <!-- Size Selection -->
+                <div class="space-y-4">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider">Choisissez votre taille</h3>
+                    <div class="flex gap-3 flex-wrap" id="sizeOptions">
+                        <button class="size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter" data-size="XS">XS</button>
+                        <button class="size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter" data-size="S">S</button>
+                        <button class="size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter" data-size="M">M</button>
+                        <button class="size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter active" data-size="L">L</button>
+                        <button class="size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter" data-size="XL">XL</button>
+                        <button class="size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter" data-size="XXL">XXL</button>
+                    </div>
+                    <p class="text-sm text-gray-400">Taille sélectionnée: <span id="selectedSize" class="text-white font-medium">L</span></p>
+                </div>
+
+                <hr class="border-dark-lighter">
+
+                <!-- Quantity -->
+                <div class="space-y-4">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider">Quantité</h3>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center bg-dark-light rounded-full overflow-hidden">
+                            <button id="decreaseQty" class="px-6 py-3 hover:bg-primary/20 transition-colors">
+                                <i class="fas fa-minus text-white"></i>
+                            </button>
+                            <span id="quantity" class="px-8 text-white font-medium">1</span>
+                            <button id="increaseQty" class="px-6 py-3 hover:bg-primary/20 transition-colors">
+                                <i class="fas fa-plus text-white"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-dark-lighter">
+
+                <!-- Add to Cart Button -->
+                <div class="flex gap-4">
+                    <button id="addToCartBtn" class="flex-1 btn-primary py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-shopping-cart mr-2"></i>Ajouter au panier
+                    </button>
+                    <button class="px-6 py-4 bg-dark-light hover:bg-dark-lighter rounded-full transition-all">
+                        <i class="fas fa-share-alt text-xl text-white"></i>
+                    </button>
+                </div>
+
+                <!-- User Role Message -->
+                <div id="roleMessage" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 text-yellow-400 text-sm">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span id="roleMessageText"></span>
+                </div>
+
+                <!-- Product Features -->
+                <div class="bg-dark-light rounded-2xl p-6 space-y-4">
+                    <div class="flex items-start gap-4">
+                        <i class="fas fa-truck text-2xl text-primary mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Livraison Gratuite</h4>
+                            <p class="text-sm text-gray-400">Livraison gratuite pour toutes commandes</p>
+                        </div>
+                    </div>
+                    <hr class="border-dark-lighter">
+                    <div class="flex items-start gap-4">
+                        <i class="fas fa-undo text-2xl text-primary mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Retours sous 30 jours</h4>
+                            <p class="text-sm text-gray-400">Retour simple sous 30 jours</p>
+                        </div>
+                    </div>
+                    <hr class="border-dark-lighter">
+                    <div class="flex items-start gap-4">
+                        <i class="fas fa-shield-alt text-2xl text-primary mt-1"></i>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Paiement Sécurisé</h4>
+                            <p class="text-sm text-gray-400">Vos paiements sont sécurisés</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="mt-20">
+            <h2 class="text-3xl font-display font-bold text-white mb-8">Avis Clients</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Review 1 -->
+                <div class="bg-dark-light rounded-2xl p-6 space-y-3">
+                    <div class="flex items-center gap-1 mb-2">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-semibold text-white">Sarah M.</h4>
+                        <i class="fas fa-check-circle text-green-500 text-sm"></i>
+                    </div>
+                    <p class="text-gray-400">
+                        "Je suis absolument ravie de cet achat ! La qualité est exceptionnelle et le confort est incomparable. Je recommande vivement !"
+                    </p>
+                    <p class="text-sm text-gray-500">Posté le 15 Août 2024</p>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="bg-dark-light rounded-2xl p-6 space-y-3">
+                    <div class="flex items-center gap-1 mb-2">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="far fa-star text-yellow-400"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-semibold text-white">Alex K.</h4>
+                        <i class="fas fa-check-circle text-green-500 text-sm"></i>
+                    </div>
+                    <p class="text-gray-400">
+                        "Très bon produit ! Correspond parfaitement à la description. La taille est exacte et la livraison a été rapide."
+                    </p>
+                    <p class="text-sm text-gray-500">Posté le 20 Août 2024</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark-light py-12 mt-20">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <p>&copy; 2026 GG.Shop. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script src="js/cart-counter.js"></script>
+    <script src="js/product-detail.js"></script>
+</body>
+</html>
