@@ -3,6 +3,8 @@ const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
+// ==================== ROUTES SPÉCIFIQUES (AVANT /:id) ====================
+
 // Récupérer tous les produits avec informations de stock
 router.get('/', async (req, res) => {
   try {
@@ -25,6 +27,73 @@ router.get('/', async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
+
+// ==================== ROUTES PANIER ====================
+
+// Récupérer le panier de l'utilisateur
+router.get('/cart', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log('🛒 GET /cart pour user_id:', userId);
+    
+    const [cartItems] = await db.query(`
+      SELECT 
+        ci.*,
+        p.name,
+        p.price,
+        p.image,
+        ps.quantity as available_stock
+      FROM cart_items ci
+      JOIN products p ON ci.product_id = p.id
+      LEFT JOIN product_stock ps ON ps.product_id = ci.product_id 
+        AND ps.color_name = ci.color_name 
+        AND ps.size = ci.size
+      WHERE ci.user_id = ?
+      ORDER BY ci.created_at DESC
+    `, [userId]);
+    
+    console.log(`✅ Panier récupéré: ${cartItems.length} article(s)`);
+    
+    // Vérifier si les articles ont encore du stock disponible
+    const cartWithAvailability = cartItems.map(item => ({
+      ...item,
+      stock_available: item.available_stock >= item.quantity,
+      max_quantity: item.available_stock
+    }));
+    
+    res.json({ success: true, cart: cartWithAvailability });
+  } catch (error) {
+    console.error('❌ Erreur récupération panier:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// Vérifier la disponibilité du stock
+router.post('/check-stock', async (req, res) => {
+  try {
+    const { productId, colorName, size, quantity } = req.body;
+    
+    const [stock] = await db.query(
+      'SELECT quantity FROM product_stock WHERE product_id = ? AND color_name = ? AND size = ?',
+      [productId, colorName, size]
+    );
+    
+    if (stock.length === 0) {
+      return res.json({ available: false, currentStock: 0 });
+    }
+    
+    const currentStock = stock[0].quantity;
+    res.json({ 
+      available: currentStock >= quantity,
+      currentStock 
+    });
+  } catch (error) {
+    console.error('Erreur vérification stock:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// ==================== ROUTES PRODUITS ====================
 
 // Récupérer un produit avec ses détails (images, couleurs, stock)
 router.get('/:id', async (req, res) => {
@@ -76,34 +145,6 @@ router.get('/:id', async (req, res) => {
     res.json({ success: true, product });
   } catch (error) {
     console.error('Erreur récupération produit:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-});
-
-// Vérifier la disponibilité du stock
-router.post('/check-stock', async (req, res) => {
-  try {
-    const { productId, colorName, size, quantity } = req.body;
-    
-    const [stock] = await db.query(
-      'SELECT quantity FROM product_stock WHERE product_id = ? AND color_name = ? AND size = ?',
-      [productId, colorName, size]
-    );
-    
-    if (stock.length === 0) {
-      return res.json({ success: false, available: false, message: 'Stock non trouvé' });
-    }
-    
-    const available = stock[0].quantity >= quantity;
-    
-    res.json({ 
-      success: true, 
-      available,
-      currentStock: stock[0].quantity,
-      message: available ? 'Stock disponible' : 'Stock insuffisant'
-    });
-  } catch (error) {
-    console.error('Erreur vérification stock:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
@@ -170,41 +211,6 @@ router.post('/cart/add', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'Article ajouté au panier' });
   } catch (error) {
     console.error('Erreur ajout panier:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-});
-
-// Récupérer le panier de l'utilisateur
-router.get('/cart', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    const [cartItems] = await db.query(`
-      SELECT 
-        ci.*,
-        p.name,
-        p.price,
-        p.image,
-        ps.quantity as available_stock
-      FROM cart_items ci
-      JOIN products p ON ci.product_id = p.id
-      LEFT JOIN product_stock ps ON ps.product_id = ci.product_id 
-        AND ps.color_name = ci.color_name 
-        AND ps.size = ci.size
-      WHERE ci.user_id = ?
-      ORDER BY ci.created_at DESC
-    `, [userId]);
-    
-    // Vérifier si les articles ont encore du stock disponible
-    const cartWithAvailability = cartItems.map(item => ({
-      ...item,
-      stock_available: item.available_stock >= item.quantity,
-      max_quantity: item.available_stock
-    }));
-    
-    res.json({ success: true, cart: cartWithAvailability });
-  } catch (error) {
-    console.error('Erreur récupération panier:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
@@ -382,16 +388,31 @@ router.post('/checkout', authenticateToken, async (req, res) => {
       });
     }
     
-    // Décrémenter le stock pour chaque article
+    // Calculer le total de la commande
+    const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Créer la commande
+    const [orderResult] = await connection.query(
+      'INSERT INTO orders (user_id, total_amount, status) VALUES (?, ?, ?)',
+      [userId, totalAmount, 'completed']
+    );
+    
+    const orderId = orderResult.insertId;
+    
+    // Ajouter les articles à order_items et décrémenter le stock
     for (const item of cartItems) {
+      // Insérer dans order_items
+      await connection.query(
+        'INSERT INTO order_items (order_id, product_id, product_name, color_name, size, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [orderId, item.product_id, item.name, item.color_name, item.size, item.quantity, item.price, item.price * item.quantity]
+      );
+      
+      // Décrémenter le stock
       await connection.query(
         'UPDATE product_stock SET quantity = quantity - ? WHERE product_id = ? AND color_name = ? AND size = ?',
         [item.quantity, item.product_id, item.color_name, item.size]
       );
     }
-    
-    // Calculer le total de la commande
-    const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     // Vider le panier de l'utilisateur
     await connection.query('DELETE FROM cart_items WHERE user_id = ?', [userId]);
@@ -401,10 +422,11 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Commande validée avec succès',
+      orderId: orderId,
       orderSummary: {
         items: cartItems.length,
         totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-        total: total.toFixed(2)
+        total: totalAmount.toFixed(2)
       }
     });
   } catch (error) {
@@ -413,6 +435,99 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur lors de la commande' });
   } finally {
     connection.release();
+  }
+});
+
+// Récupérer l'historique des commandes de l'utilisateur
+router.get('/orders', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const [orders] = await db.query(`
+      SELECT 
+        o.id,
+        o.total_amount,
+        o.status,
+        o.created_at,
+        COUNT(oi.id) as items_count,
+        SUM(oi.quantity) as total_items
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.user_id = ?
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+    `, [userId]);
+    
+    res.json({ success: true, orders });
+  } catch (error) {
+    console.error('Erreur récupération commandes:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// Récupérer les détails d'une commande
+router.get('/orders/:orderId', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const orderId = req.params.orderId;
+    
+    // Récupérer la commande
+    const [orders] = await db.query(
+      'SELECT * FROM orders WHERE id = ? AND user_id = ?',
+      [orderId, userId]
+    );
+    
+    if (orders.length === 0) {
+      return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+    }
+    
+    const order = orders[0];
+    
+    // Récupérer les articles de la commande
+    const [items] = await db.query(`
+      SELECT 
+        oi.*,
+        p.image
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ?
+      ORDER BY oi.created_at
+    `, [orderId]);
+    
+    order.items = items;
+    
+    res.json({ success: true, order });
+  } catch (error) {
+    console.error('Erreur récupération détails commande:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// Admin - Récupérer toutes les commandes
+router.get('/admin/orders', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const [orders] = await db.query(`
+      SELECT 
+        o.id,
+        o.user_id,
+        u.username,
+        u.email,
+        o.total_amount,
+        o.status,
+        o.created_at,
+        COUNT(oi.id) as items_count,
+        SUM(oi.quantity) as total_items
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+    `);
+    
+    res.json({ success: true, orders });
+  } catch (error) {
+    console.error('Erreur récupération commandes admin:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 

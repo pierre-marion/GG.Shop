@@ -49,9 +49,9 @@ function updateAuthUI(user) {
         if (nav && !document.getElementById('adminLink')) {
             const adminLink = document.createElement('a');
             adminLink.id = 'adminLink';
-            adminLink.href = 'admin-stock.html';
+            adminLink.href = 'admin.html';
             adminLink.className = 'navbar-link text-primary';
-            adminLink.innerHTML = '<i class="fas fa-cog mr-1"></i>Admin Stock';
+            adminLink.innerHTML = '<i class="fas fa-cog mr-1"></i>Admin';
             nav.appendChild(adminLink);
         }
     } else if (user.role === 'connecté') {

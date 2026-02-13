@@ -515,20 +515,22 @@ function setupEventListeners() {
 // Gérer l'ajout au panier
 async function handleAddToCart() {
     if (!currentUser || currentUser.role === 'visiteur') {
-        alert('Vous devez être connecté pour acheter ce produit.');
-        window.location.href = 'login.html';
+        showPopup('Vous devez être connecté pour acheter ce produit.', 'warning');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
         return;
     }
     
     // Vérifier le stock une dernière fois
     const stockQty = (productStock[selectedColor] && productStock[selectedColor][selectedSize]) || 0;
     if (quantity > stockQty) {
-        alert(`Stock insuffisant. Seulement ${stockQty} article(s) disponible(s).`);
+        showPopup(`Stock insuffisant. Seulement ${stockQty} article(s) disponible(s).`, 'warning');
         return;
     }
     
     if (quantity <= 0) {
-        alert('Veuillez sélectionner une quantité valide.');
+        showPopup('Veuillez sélectionner une quantité valide.', 'warning');
         return;
     }
     
@@ -563,31 +565,17 @@ async function handleAddToCart() {
             const data = await response.json();
             
             if (!data.success) {
-                alert(data.message || 'Erreur lors de l\'ajout au panier');
+                showPopup(data.message || 'Erreur lors de l\'ajout au panier', 'error');
                 return;
             }
+            
+            console.log('✅ Produit ajouté au panier via API');
         } catch (error) {
             console.error('Erreur API panier:', error);
-            // Continuer avec le stockage local en cas d'erreur
+            showPopup('Erreur lors de l\'ajout au panier', 'error');
+            return;
         }
     }
-    
-    // Aussi stocker dans localStorage pour compatibilité
-    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    const existingIndex = cart.findIndex(item => 
-        item.id === cartItem.id && 
-        item.color === cartItem.color && 
-        item.size === cartItem.size
-    );
-    
-    if (existingIndex >= 0) {
-        cart[existingIndex].quantity += cartItem.quantity;
-    } else {
-        cart.push(cartItem);
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
     
     // Animation de succès
     const btn = document.getElementById('addToCartBtn');

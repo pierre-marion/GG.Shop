@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Panier</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a1a; color: white; }
+        .log { background: #2a2a2a; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        button { background: #9333ea; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #7e22ce; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test du Panier</h1>
+    
+    <div>
+        <button onclick="setTestToken()">1. Définir Token de Test</button>
+        <button onclick="testAPI()">2. Tester API Panier</button>
+        <button onclick="goToPanier()">3. Aller sur Panier</button>
+        <button onclick="clearStorage()">🗑️ Vider LocalStorage</button>
+    </div>
+    
+    <div id="logs"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = message;
+            document.getElementById('logs').prepend(div);
+            console.log(message);
+        }
+        
+        function setTestToken() {
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJuYXRoYW5jdXJhc3NpZXJAZ21haWwuY29tIiwicm9sZSI6ImNvbm5lY3TDqSIsInVzZXJuYW1lIjoiQWlyWm9tYSIsImlhdCI6MTc3MDk5NzM4NiwiZXhwIjoxNzcxMDgzNzg2fQ.vvmRhSXwPjcNedtJU_td8UX4P_Jg-Rb9OR9N1GDm3KY';
+            localStorage.setItem('token', token);
+            log('✅ Token défini dans localStorage', 'success');
+        }
+        
+        async function testAPI() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                log('❌ Aucun token trouvé! Cliquez d\'abord sur "Définir Token de Test"', 'error');
+                return;
+            }
+            
+            log('🔄 Test de l\'API...');
+            
+            try {
+                const response = await fetch(`${API_URL}/products/cart`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                log(`📡 Status: ${response.status} ${response.statusText}`);
+                
+                const data = await response.json();
+                log(`📦 Réponse: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.success && data.cart) {
+                    log(`✅ SUCCESS! ${data.cart.length} article(s) dans le panier`, 'success');
+                    data.cart.forEach((item, i) => {
+                        log(`   ${i+1}. ${item.name} - ${item.color_name} - Taille ${item.size} - Qté: ${item.quantity}`);
+                    });
+                } else {
+                    log('⚠️ API répond mais success=false', 'error');
+                }
+            } catch (error) {
+                log(`❌ ERREUR: ${error.message}`, 'error');
+            }
+        }
+        
+        function goToPanier() {
+            window.location.href = 'panier.html';
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            log('🗑️ LocalStorage vidé', 'success');
+        }
+        
+        // Auto-test au chargement
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                log('ℹ️ Token trouvé dans localStorage');
+            } else {
+                log('⚠️ Aucun token dans localStorage');
+            }
+        });
+    </script>
+</body>
+</html>

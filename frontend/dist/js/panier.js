@@ -67,7 +67,7 @@ function updateAuthButtons(user) {
                 <span class="font-medium">${user.username}</span>
                 <span class="ml-2 px-2 py-1 text-xs rounded-full ${roleColor}">${user.role}</span>
             </div>
-            ${user.role === 'admin' ? '<a href="admin-crud.html" class="text-primary hover:text-primary-dark transition-colors"><i class="fas fa-cog mr-1"></i>Admin</a>' : ''}
+            ${user.role === 'admin' ? '<a href="admin.html" class="text-primary hover:text-primary-dark transition-colors"><i class="fas fa-cog mr-1"></i>Admin</a>' : ''}
             <button onclick="logout()" class="text-red-400 hover:text-red-300 transition-colors">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
@@ -98,21 +98,32 @@ async function loadCart() {
         });
         
         const data = await response.json();
+        console.log('📦 Réponse API panier:', data);
+        console.log('📊 Nombre d\'articles:', data.cart ? data.cart.length : 0);
         
         if (data.success) {
             cartItems = data.cart;
+            console.log('✅ Articles chargés:', cartItems);
+            
+            // Sauvegarder dans localStorage
+            saveCartToLocalStorage();
             
             document.getElementById('loading').classList.add('hidden');
             
             if (cartItems.length === 0) {
+                console.log('⚠️ Panier vide - affichage message');
                 document.getElementById('emptyCart').classList.remove('hidden');
+                document.getElementById('cartContent').classList.add('hidden');
             } else {
+                console.log('✅ Affichage du panier avec', cartItems.length, 'article(s)');
+                document.getElementById('emptyCart').classList.add('hidden');
                 document.getElementById('cartContent').classList.remove('hidden');
                 displayCart();
                 updateSummary();
                 checkStockAvailability();
             }
         } else {
+            console.error('❌ Erreur API:', data.message);
             showError('Erreur lors du chargement du panier');
         }
     } catch (error) {
@@ -236,6 +247,7 @@ async function updateQuantity(cartItemId, newQuantity) {
         
         if (data.success) {
             await loadCart();
+            saveCartToLocalStorage();
             showNotification('success', 'Quantité mise à jour');
         } else {
             showNotification('error', data.message);
@@ -276,6 +288,7 @@ async function confirmDelete() {
         if (data.success) {
             cancelDelete();
             await loadCart();
+            saveCartToLocalStorage();
             updateCartBadge();
             showNotification('success', 'Article retiré du panier');
         } else {
@@ -355,6 +368,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 
                 if (data.success) {
+                    // Vider le panier après validation
+                    cartItems = [];
+                    clearCartFromLocalStorage();
+                    updateCartBadge();
+                    
                     showNotification('success', 'Commande validée ! Stock mis à jour.');
                     
                     setTimeout(() => {
@@ -450,4 +468,37 @@ function showError(message) {
             <p class="text-gray-400">${message}</p>
         </div>
     `;
+}
+
+// Sauvegarder le panier dans localStorage
+function saveCartToLocalStorage() {
+    try {
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+        localStorage.setItem('cartLastUpdate', new Date().toISOString());
+    } catch (error) {
+        console.error('Erreur sauvegarde localStorage:', error);
+    }
+}
+
+// Charger le panier depuis localStorage (en cas de problème serveur)
+function loadCartFromLocalStorage() {
+    try {
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+            return JSON.parse(savedCart);
+        }
+    } catch (error) {
+        console.error('Erreur chargement localStorage:', error);
+    }
+    return [];
+}
+
+// Vider le panier du localStorage
+function clearCartFromLocalStorage() {
+    try {
+        localStorage.removeItem('cart');
+        localStorage.removeItem('cartLastUpdate');
+    } catch (error) {
+        console.error('Erreur nettoyage localStorage:', error);
+    }
 }

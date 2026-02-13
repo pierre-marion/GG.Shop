@@ -5,16 +5,21 @@ const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+  console.log('🔐 authenticateToken:', req.method, req.path, 'Token présent:', !!token);
+
   if (!token) {
+    console.log('⚠️ Pas de token, mode visiteur');
     req.user = { role: 'visiteur' }; // Pas de token = visiteur
     return next();
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
+      console.log('❌ Token invalide:', err.message);
       req.user = { role: 'visiteur' }; // Token invalide = visiteur
       return next();
     }
+    console.log('✅ Token valide, user:', user.id, user.username, user.role);
     req.user = user; // Token valide = utilisateur connecté avec son rôle
     next();
   });

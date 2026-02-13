@@ -17,6 +17,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware de logging pour debug
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.path}`);
+  next();
+});
+
 // Servir les fichiers statiques du frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 

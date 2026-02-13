@@ -16,10 +16,9 @@ const promoCodes = {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🔄 Initialisation du panier...');
     checkAuth();
-    loadCart();
     setupEventListeners();
-    updateCartDisplay();
 });
 
 // Vérifier l'authentification
@@ -42,6 +41,10 @@ async function checkAuth() {
                 
                 // Charger le panier depuis l'API
                 await loadCartFromAPI();
+                console.log('📦 Panier chargé depuis API, articles:', cart.length);
+                
+                // Mettre à jour l'affichage après chargement
+                updateCartDisplay();
             } else {
                 document.getElementById('guestButtons').classList.remove('hidden');
                 document.getElementById('userButtons').classList.add('hidden');
@@ -101,7 +104,12 @@ function checkCheckoutPermission(role) {
 // Charger le panier depuis l'API
 async function loadCartFromAPI() {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+        console.log('⚠️ Pas de token, impossible de charger le panier');
+        return;
+    }
+    
+    console.log('🔄 Chargement du panier depuis l\'API...');
     
     try {
         const response = await fetch(`${API_URL}/products/cart`, {
@@ -110,8 +118,12 @@ async function loadCartFromAPI() {
             }
         });
         
+        console.log('📡 Réponse API panier:', response.status);
+        
         if (response.ok) {
             const data = await response.json();
+            console.log('📦 Données panier:', data);
+            
             if (data.success) {
                 // Convertir le format API vers le format local
                 cart = data.cart.map(item => ({
@@ -127,14 +139,14 @@ async function loadCartFromAPI() {
                     stockAvailable: item.stock_available
                 }));
                 
-                // Synchroniser avec localStorage
+                console.log('✅ Panier converti:', cart);
+                
+                // Synchroniser avec localStorage pour compatibilité
                 localStorage.setItem('cart', JSON.stringify(cart));
             }
         }
     } catch (error) {
-        console.error('Erreur chargement panier API:', error);
-        // Fallback sur localStorage
-        loadCart();
+        console.error('❌ Erreur chargement panier API:', error);
     }
 }
 
@@ -195,30 +207,43 @@ function saveCart() {
 
 // Afficher le panier
 function updateCartDisplay() {
+    console.log('🎨 updateCartDisplay() appelé, cart.length:', cart.length);
+    console.log('🎨 Contenu du panier:', cart);
+    
     const cartItemsContainer = document.getElementById('cartItems');
     const emptyCart = document.getElementById('emptyCart');
     const cartContent = document.getElementById('cartContent');
+    
+    console.log('🎨 Éléments DOM:', {
+        cartItemsContainer: !!cartItemsContainer,
+        emptyCart: !!emptyCart,
+        cartContent: !!cartContent
+    });
     
     // Mettre à jour le compteur dans le header
     updateCartCount();
     
     if (cart.length === 0) {
+        console.log('⚠️ Panier vide, affichage du message');
         emptyCart.classList.remove('hidden');
         cartContent.classList.add('hidden');
         return;
     }
     
+    console.log('✅ Panier non vide, affichage des articles');
     emptyCart.classList.add('hidden');
     cartContent.classList.remove('hidden');
     
     cartItemsContainer.innerHTML = '';
     
     cart.forEach((item, index) => {
+        console.log(`🔨 Création élément ${index}:`, item);
         const itemElement = createCartItemElement(item, index);
         cartItemsContainer.appendChild(itemElement);
     });
     
     updateOrderSummary();
+    console.log('✅ updateCartDisplay() terminé');
 }
 
 // Créer un élément de panier
@@ -318,7 +343,7 @@ async function updateQuantity(index, change) {
         
         // Vérifier le stock disponible
         if (cart[index].availableStock !== undefined && newQuantity > cart[index].availableStock) {
-            alert(`Stock insuffisant. Seulement ${cart[index].availableStock} article(s) disponible(s).`);
+            showPopup(`Stock insuffisant. Seulement ${cart[index].availableStock} article(s) disponible(s).`, 'warning');
             return;
         }
         
@@ -339,7 +364,7 @@ async function updateQuantity(index, change) {
                 
                 if (!response.ok) {
                     const data = await response.json();
-                    alert(data.message || 'Erreur lors de la mise à jour');
+                    showPopup(data.message || 'Erreur lors de la mise à jour', 'error');
                     
                     // Recharger le panier pour synchroniser
                     await loadCartFromAPI();
@@ -519,13 +544,15 @@ function showPromoMessage(message, type) {
 // Gérer le checkout
 async function handleCheckout() {
     if (!currentUser || currentUser.role === 'visiteur') {
-        alert('Vous devez être connecté pour passer commande.');
-        window.location.href = 'login.html';
+        showPopup('Vous devez être connecté pour passer commande.', 'warning');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
         return;
     }
     
     if (cart.length === 0) {
-        alert('Votre panier est vide.');
+        showPopup('Votre panier est vide.', 'warning');
         return;
     }
     
@@ -539,7 +566,7 @@ async function handleCheckout() {
     }
     
     if (hasStockIssues) {
-        alert('Certains articles de votre panier ne sont plus disponibles en quantité suffisante. Veuillez vérifier votre panier.');
+        showPopup('Certains articles de votre panier ne sont plus disponibles en quantité suffisante. Veuillez vérifier votre panier.', 'warning');
         await verifyCartStock();
         updateCartDisplay();
         return;
@@ -558,25 +585,70 @@ async function handleCheckout() {
     
     console.log('Commande:', orderData);
     
-    // Simulation de la commande
+    // Appeler l'API de checkout
     const checkoutBtn = document.getElementById('checkoutBtn');
     const originalText = checkoutBtn.innerHTML;
     
     checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Traitement...';
     checkoutBtn.disabled = true;
     
-    // Simuler un délai de traitement
-    setTimeout(() => {
-        // Vider le panier
-        cart = [];
-        saveCart();
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/products/checkout`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
         
-        // Afficher un message de succès
-        alert(`✅ Commande validée !\n\nMontant total: $${total}\nMerci pour votre achat ${currentUser.username} !`);
+        const data = await response.json();
         
-        // Rediriger vers la page d'accueil
-        window.location.href = 'index.html';
-    }, 2000);
+        if (data.success) {
+            console.log('✅ Commande validée, vidage du panier...');
+            
+            // Vider le panier complètement
+            cart = [];
+            localStorage.removeItem('cart');
+            localStorage.removeItem('cartLastUpdate');
+            
+            // Sauvegarder le panier vide
+            saveCart();
+            updateCartCount();
+            
+            console.log('🗑️ Panier vidé, cart:', cart);
+            console.log('🗑️ localStorage cart:', localStorage.getItem('cart'));
+            
+            // Afficher un message de succès
+            showPopup(`✅ Commande validée !\n\nCommande #${data.orderId}\nMontant total: ${data.orderSummary.total}€\nMerci pour votre achat ${currentUser.username} !`, 'success');
+            
+            // Rediriger vers la page d'accueil après 3 secondes
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 3000);
+        } else {
+            // Afficher l'erreur
+            showPopup(`❌ Erreur: ${data.message}`, 'error');
+            
+            // Si problème de stock, recharger le panier
+            if (data.stockIssues) {
+                await loadCartFromAPI();
+                await verifyCartStock();
+                updateCartDisplay();
+            }
+            
+            // Réactiver le bouton
+            checkoutBtn.innerHTML = originalText;
+            checkoutBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Erreur checkout:', error);
+        showPopup('❌ Erreur serveur lors de la commande', 'error');
+        
+        // Réactiver le bouton
+        checkoutBtn.innerHTML = originalText;
+        checkoutBtn.disabled = false;
+    }
 }
 
 // Fonction globale pour ajouter au panier (appelée depuis product-detail.js)
