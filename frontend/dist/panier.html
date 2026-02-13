@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Panier - GG.SHOP</title>
+    <link rel="stylesheet" href="output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark">
+    <!-- Header -->
+    <header class="bg-dark/95 backdrop-blur-md border-b border-dark-lighter sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-12">
+                    <a href="index.html" class="text-3xl font-display font-bold text-white hover:text-primary transition-colors duration-300">GG.SHOP</a>
+                    
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a href="index.html" class="navbar-link">Accueil</a>
+                        <a href="panier.html" class="navbar-link text-primary">Panier</a>
+                    </nav>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <!-- Buttons will be inserted by JavaScript -->
+                    </div>
+                    
+                    <a href="panier.html" class="relative group">
+                        <i class="fas fa-shopping-cart text-2xl text-white group-hover:text-primary transition-colors duration-300"></i>
+                        <span id="cartBadge" class="absolute -top-2 -right-2 bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Cart Section -->
+    <section class="container mx-auto px-6 py-12 min-h-screen">
+        <div class="mb-8">
+            <h1 class="text-4xl md:text-5xl font-display font-bold text-white mb-4">
+                <i class="fas fa-shopping-cart text-primary mr-4"></i>MON PANIER
+            </h1>
+            <p class="text-gray-400">Vérifiez vos articles avant de finaliser votre commande</p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center py-20">
+            <i class="fas fa-spinner fa-spin text-6xl text-primary mb-4"></i>
+            <p class="text-gray-400">Chargement de votre panier...</p>
+        </div>
+
+        <!-- Not Logged In -->
+        <div id="notLoggedIn" class="hidden text-center py-20">
+            <i class="fas fa-user-lock text-8xl text-yellow-500 mb-6"></i>
+            <h2 class="text-2xl font-bold text-white mb-4">Connexion Requise</h2>
+            <p class="text-gray-400 mb-8">Vous devez être connecté pour accéder à votre panier.</p>
+            <div class="flex gap-4 justify-center">
+                <a href="login.html" class="bg-primary hover:bg-primary-dark text-white font-bold px-8 py-4 rounded-xl transition-all duration-300">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                </a>
+                <a href="register.html" class="bg-dark-light hover:bg-dark-lighter text-white font-bold px-8 py-4 rounded-xl transition-all duration-300">
+                    <i class="fas fa-user-plus mr-2"></i>S'inscrire
+                </a>
+            </div>
+        </div>
+
+        <!-- Empty Cart -->
+        <div id="emptyCart" class="hidden text-center py-20">
+            <i class="fas fa-shopping-cart text-8xl text-gray-600 mb-6"></i>
+            <h2 class="text-2xl font-bold text-white mb-4">Votre panier est vide</h2>
+            <p class="text-gray-400 mb-8">Découvrez nos produits et ajoutez-les à votre panier !</p>
+            <a href="index.html" class="bg-gradient-to-r from-primary to-primary-dark text-white font-bold px-10 py-4 rounded-xl hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 inline-flex items-center gap-3">
+                <i class="fas fa-arrow-left"></i>
+                <span>Retour à la boutique</span>
+            </a>
+        </div>
+
+        <!-- Cart Content -->
+        <div id="cartContent" class="hidden">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Cart Items -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div id="cartItems">
+                        <!-- Items will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="lg:col-span-1">
+                    <div class="bg-dark-light rounded-3xl p-8 sticky top-24">
+                        <h2 class="text-2xl font-bold text-white mb-6">
+                            <i class="fas fa-file-invoice-dollar text-primary mr-2"></i>
+                            Récapitulatif
+                        </h2>
+
+                        <div class="space-y-4 mb-6">
+                            <div class="flex justify-between text-gray-400">
+                                <span>Articles (<span id="totalItems">0</span>)</span>
+                                <span id="subtotal" class="font-bold">0.00€</span>
+                            </div>
+                            <div class="flex justify-between text-gray-400">
+                                <span>Livraison</span>
+                                <span id="shipping" class="font-bold">GRATUITE</span>
+                            </div>
+                            <div class="border-t border-dark-lighter pt-4"></div>
+                            <div class="flex justify-between text-white text-xl font-bold">
+                                <span>Total</span>
+                                <span id="total" class="text-primary">0.00€</span>
+                            </div>
+                        </div>
+
+                        <!-- Stock Warnings -->
+                        <div id="stockWarnings" class="hidden mb-6">
+                            <!-- Warnings will be inserted here -->
+                        </div>
+
+                        <button id="checkoutBtn" class="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold py-4 rounded-xl hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 flex items-center justify-center gap-3">
+                            <i class="fas fa-lock"></i>
+                            <span>Passer la commande</span>
+                        </button>
+
+                        <div class="mt-6 text-center">
+                            <a href="index.html" class="text-primary hover:text-primary-dark transition-colors text-sm">
+                                <i class="fas fa-arrow-left mr-2"></i>Continuer mes achats
+                            </a>
+                        </div>
+
+                        <!-- Payment Methods -->
+                        <div class="mt-8 pt-6 border-t border-dark-lighter">
+                            <p class="text-gray-400 text-xs text-center mb-3">Paiement sécurisé</p>
+                            <div class="flex justify-center gap-3 opacity-50">
+                                <i class="fab fa-cc-visa text-2xl text-white"></i>
+                                <i class="fab fa-cc-mastercard text-2xl text-white"></i>
+                                <i class="fab fa-cc-paypal text-2xl text-white"></i>
+                                <i class="fab fa-cc-amex text-2xl text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-dark-light rounded-3xl p-8 max-w-md w-full">
+            <div class="text-center mb-6">
+                <i class="fas fa-exclamation-triangle text-6xl text-yellow-500 mb-4"></i>
+                <h3 class="text-2xl font-bold text-white mb-2">Retirer du panier ?</h3>
+                <p class="text-gray-400">Êtes-vous sûr de vouloir retirer cet article de votre panier ?</p>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="cancelDelete()" class="flex-1 bg-dark hover:bg-dark-lighter text-white font-bold py-3 rounded-xl transition-all duration-300">
+                    Annuler
+                </button>
+                <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all duration-300">
+                    <i class="fas fa-trash mr-2"></i>Retirer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-dark-light rounded-3xl p-8 max-w-md w-full text-center">
+            <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+            <h3 class="text-2xl font-bold text-white mb-4">Commande validée !</h3>
+            <p class="text-gray-400 mb-6">Merci pour votre commande. Vous recevrez un email de confirmation.</p>
+            <button onclick="closeSuccessModal()" class="bg-primary hover:bg-primary-dark text-white font-bold px-8 py-3 rounded-xl transition-all duration-300">
+                Retour à l'accueil
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark-light py-12 mt-20">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <p>&copy; 2026 GG.SHOP - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script src="js/panier.js"></script>
+</body>
+</html>

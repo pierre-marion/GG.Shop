@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 // Import routes et middleware
 const authRoutes = require('./routes/auth');
+const productsRoutes = require('./routes/products');
 const { authenticateToken, requireRole } = require('./middleware/auth');
 
 // Middleware
@@ -27,8 +28,11 @@ app.get('/api/health', (req, res) => {
 // Routes d'authentification
 app.use('/api/auth', authRoutes);
 
-// Route pour les produits (accessible à tous après authentification)
-app.get('/api/products', authenticateToken, (req, res) => {
+// Routes des produits et du panier
+app.use('/api/products', productsRoutes);
+
+// Route pour les produits (ancienne - à garder pour compatibilité)
+app.get('/api/products-legacy', authenticateToken, (req, res) => {
   const products = [
     { id: 1, name: 'Prediction Pack Premium', price: 49.99, category: 'esports' },
     { id: 2, name: 'Analyse Match CS2', price: 29.99, category: 'csgo' },

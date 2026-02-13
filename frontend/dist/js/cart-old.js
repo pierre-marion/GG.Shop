@@ -39,9 +39,6 @@ async function checkAuth() {
                 currentUser = data.user;
                 updateAuthUI(data.user);
                 checkCheckoutPermission(data.user.role);
-                
-                // Charger le panier depuis l'API
-                await loadCartFromAPI();
             } else {
                 document.getElementById('guestButtons').classList.remove('hidden');
                 document.getElementById('userButtons').classList.add('hidden');
@@ -98,94 +95,12 @@ function checkCheckoutPermission(role) {
     }
 }
 
-// Charger le panier depuis l'API
-async function loadCartFromAPI() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/products/cart`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-                // Convertir le format API vers le format local
-                cart = data.cart.map(item => ({
-                    id: item.product_id,
-                    cartItemId: item.id,
-                    name: item.name,
-                    image: item.image,
-                    color: item.color_name,
-                    size: item.size,
-                    quantity: item.quantity,
-                    price: item.price,
-                    availableStock: item.available_stock,
-                    stockAvailable: item.stock_available
-                }));
-                
-                // Synchroniser avec localStorage
-                localStorage.setItem('cart', JSON.stringify(cart));
-            }
-        }
-    } catch (error) {
-        console.error('Erreur chargement panier API:', error);
-        // Fallback sur localStorage
-        loadCart();
-    }
-}
-
 // Charger le panier depuis localStorage
 function loadCart() {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
         cart = JSON.parse(savedCart);
-        
-        // Vérifier le stock pour chaque article
-        if (currentUser && currentUser.role !== 'visiteur') {
-            verifyCartStock();
-        }
     }
-}
-
-// Vérifier le stock pour tous les articles du panier
-async function verifyCartStock() {
-    for (let i = 0; i < cart.length; i++) {
-        const item = cart[i];
-        
-        try {
-            const response = await fetch(`${API_URL}/products/check-stock`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: item.id,
-                    colorName: item.color,
-                    size: item.size,
-                    quantity: item.quantity
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                cart[i].stockAvailable = data.available;
-                cart[i].availableStock = data.currentStock || 0;
-                
-                // Ajuster la quantité si nécessaire
-                if (!data.available && data.currentStock > 0) {
-                    cart[i].quantity = data.currentStock;
-                }
-            }
-        } catch (error) {
-            console.error('Erreur vérification stock:', error);
-        }
-    }
-    
-    saveCart();
 }
 
 // Sauvegarder le panier dans localStorage
@@ -224,35 +139,9 @@ function updateCartDisplay() {
 // Créer un élément de panier
 function createCartItemElement(item, index) {
     const div = document.createElement('div');
-    const itemTotal = item.price * item.quantity;
-    
-    // Vérifier si le stock est insuffisant
-    const hasStockIssue = item.stockAvailable === false || 
-                          (item.availableStock !== undefined && item.quantity > item.availableStock);
-    
-    let stockWarning = '';
-    if (hasStockIssue) {
-        if (item.availableStock === 0) {
-            stockWarning = `
-                <div class="mt-2 bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    Rupture de stock - Cet article ne peut pas être commandé
-                </div>
-            `;
-        } else {
-            stockWarning = `
-                <div class="mt-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-yellow-400 text-sm">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    Stock limité : seulement ${item.availableStock} disponible(s)
-                </div>
-            `;
-        }
-    }
-    
     div.className = 'bg-dark-light rounded-3xl p-6 flex gap-6 relative';
-    if (hasStockIssue && item.availableStock === 0) {
-        div.className += ' opacity-60';
-    }
+    
+    const itemTotal = item.price * item.quantity;
     
     div.innerHTML = `
         <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors" onclick="removeItem(${index})">
@@ -269,11 +158,8 @@ function createCartItemElement(item, index) {
                 <div class="flex flex-wrap gap-4 text-sm text-gray-400">
                     <p>Couleur: <span class="text-white">${item.color}</span></p>
                     <p>Taille: <span class="text-white">${item.size}</span></p>
-                    ${item.availableStock !== undefined ? `<p>Stock: <span class="text-primary">${item.availableStock} dispo</span></p>` : ''}
                 </div>
             </div>
-            
-            ${stockWarning}
             
             <div class="flex items-center justify-between">
                 <div class="text-2xl font-bold text-white">
@@ -282,15 +168,11 @@ function createCartItemElement(item, index) {
                 
                 <div class="flex items-center gap-4">
                     <div class="flex items-center bg-dark rounded-full overflow-hidden">
-                        <button class="px-4 py-2 hover:bg-dark-lighter transition-colors ${item.availableStock === 0 ? 'opacity-50 cursor-not-allowed' : ''}" 
-                                onclick="updateQuantity(${index}, -1)"
-                                ${item.availableStock === 0 ? 'disabled' : ''}>
+                        <button class="px-4 py-2 hover:bg-dark-lighter transition-colors" onclick="updateQuantity(${index}, -1)">
                             <i class="fas fa-minus text-white"></i>
                         </button>
                         <span class="px-6 text-white font-medium">${item.quantity}</span>
-                        <button class="px-4 py-2 hover:bg-dark-lighter transition-colors ${item.availableStock !== undefined && item.quantity >= item.availableStock ? 'opacity-50 cursor-not-allowed' : ''}" 
-                                onclick="updateQuantity(${index}, 1)"
-                                ${item.availableStock !== undefined && item.quantity >= item.availableStock ? 'disabled' : ''}>
+                        <button class="px-4 py-2 hover:bg-dark-lighter transition-colors" onclick="updateQuantity(${index}, 1)">
                             <i class="fas fa-plus text-white"></i>
                         </button>
                     </div>
@@ -307,75 +189,22 @@ function createCartItemElement(item, index) {
 }
 
 // Mettre à jour la quantité d'un article
-async function updateQuantity(index, change) {
+function updateQuantity(index, change) {
     if (cart[index]) {
-        const newQuantity = cart[index].quantity + change;
+        cart[index].quantity += change;
         
-        if (newQuantity <= 0) {
+        if (cart[index].quantity <= 0) {
             removeItem(index);
-            return;
+        } else {
+            saveCart();
+            updateCartDisplay();
         }
-        
-        // Vérifier le stock disponible
-        if (cart[index].availableStock !== undefined && newQuantity > cart[index].availableStock) {
-            alert(`Stock insuffisant. Seulement ${cart[index].availableStock} article(s) disponible(s).`);
-            return;
-        }
-        
-        cart[index].quantity = newQuantity;
-        
-        // Mettre à jour via l'API si connecté
-        const token = localStorage.getItem('token');
-        if (token && cart[index].cartItemId) {
-            try {
-                const response = await fetch(`${API_URL}/products/cart/${cart[index].cartItemId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ quantity: newQuantity })
-                });
-                
-                if (!response.ok) {
-                    const data = await response.json();
-                    alert(data.message || 'Erreur lors de la mise à jour');
-                    
-                    // Recharger le panier pour synchroniser
-                    await loadCartFromAPI();
-                    updateCartDisplay();
-                    return;
-                }
-            } catch (error) {
-                console.error('Erreur mise à jour panier API:', error);
-            }
-        }
-        
-        saveCart();
-        updateCartDisplay();
     }
 }
 
 // Supprimer un article
-async function removeItem(index) {
+function removeItem(index) {
     if (confirm('Voulez-vous vraiment supprimer cet article ?')) {
-        const item = cart[index];
-        
-        // Supprimer via l'API si connecté
-        const token = localStorage.getItem('token');
-        if (token && item.cartItemId) {
-            try {
-                await fetch(`${API_URL}/products/cart/${item.cartItemId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-            } catch (error) {
-                console.error('Erreur suppression panier API:', error);
-            }
-        }
-        
         cart.splice(index, 1);
         saveCart();
         updateCartDisplay();
@@ -386,15 +215,10 @@ async function removeItem(index) {
 function updateOrderSummary() {
     let subtotal = 0;
     let itemCount = 0;
-    let hasStockIssues = false;
     
     cart.forEach(item => {
         subtotal += item.price * item.quantity;
         itemCount += item.quantity;
-        
-        if (item.availableStock !== undefined && item.availableStock === 0) {
-            hasStockIssues = true;
-        }
     });
     
     let discount = 0;
@@ -408,16 +232,6 @@ function updateOrderSummary() {
     document.getElementById('subtotal').textContent = `$${subtotal}`;
     document.getElementById('discount').textContent = discount > 0 ? `-$${discount}` : '$0';
     document.getElementById('total').textContent = `$${total}`;
-    
-    // Désactiver le checkout si problème de stock
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (hasStockIssues && currentUser && currentUser.role !== 'visiteur') {
-        checkoutBtn.disabled = true;
-        checkoutBtn.title = 'Certains articles ne sont plus disponibles';
-    } else if (currentUser && currentUser.role !== 'visiteur') {
-        checkoutBtn.disabled = false;
-        checkoutBtn.title = '';
-    }
 }
 
 // Mettre à jour le compteur du panier
@@ -526,22 +340,6 @@ async function handleCheckout() {
     
     if (cart.length === 0) {
         alert('Votre panier est vide.');
-        return;
-    }
-    
-    // Vérifier une dernière fois le stock
-    let hasStockIssues = false;
-    for (const item of cart) {
-        if (item.availableStock !== undefined && item.availableStock < item.quantity) {
-            hasStockIssues = true;
-            break;
-        }
-    }
-    
-    if (hasStockIssues) {
-        alert('Certains articles de votre panier ne sont plus disponibles en quantité suffisante. Veuillez vérifier votre panier.');
-        await verifyCartStock();
-        updateCartDisplay();
         return;
     }
     

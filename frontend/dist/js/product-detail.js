@@ -1,108 +1,13 @@
 // Configuration API
 const API_URL = 'http://localhost:3000/api';
 
-// Produits disponibles (à remplacer par un appel API plus tard)
-const products = {
-    1: {
-        id: 1,
-        name: 'T-shirt à Col Dégradé',
-        category: 'T-shirts',
-        price: 212,
-        oldPrice: 242,
-        discount: '-20%',
-        rating: 4.5,
-        description: 'Ce T-shirt à col dégradé combine style et confort pour un look décontracté mais élégant. Fabriqué avec des matériaux de haute qualité, il offre une respirabilité exceptionnelle et une durabilité longue durée.',
-        image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800',
-        images: [
-            'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800',
-            'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800',
-            'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800',
-            'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800'
-        ],
-        colors: [
-            { name: 'Vert Olive', value: 'bg-green-700' },
-            { name: 'Noir', value: 'bg-gray-800' },
-            { name: 'Bleu Marine', value: 'bg-blue-900' }
-        ],
-        sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-    },
-    2: {
-        id: 2,
-        name: 'Jean Skinny Fit',
-        category: 'Jeans',
-        price: 240,
-        oldPrice: 260,
-        discount: '-20%',
-        rating: 3.5,
-        description: 'Jean skinny fit parfait pour un look moderne. Coupe ajustée qui met en valeur votre silhouette tout en restant confortable grâce à son tissu extensible.',
-        image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=800',
-        images: [
-            'https://images.unsplash.com/photo-1542272604-787c3835535d?w=800',
-            'https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?w=800',
-            'https://images.unsplash.com/photo-1475178626620-a4d074967452?w=800',
-            'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800'
-        ],
-        colors: [
-            { name: 'Bleu Denim', value: 'bg-blue-600' },
-            { name: 'Noir', value: 'bg-gray-900' },
-            { name: 'Gris', value: 'bg-gray-500' }
-        ],
-        sizes: ['28', '30', '32', '34', '36', '38']
-    },
-    3: {
-        id: 3,
-        name: 'Chemise à Carreaux',
-        category: 'Chemises',
-        price: 180,
-        oldPrice: null,
-        discount: null,
-        rating: 4.5,
-        description: 'Chemise à carreaux classique pour un style décontracté-chic. Parfaite pour le bureau ou une sortie décontractée. Tissu doux et respirant pour un confort optimal.',
-        image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800',
-        images: [
-            'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800',
-            'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800',
-            'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800',
-            'https://images.unsplash.com/photo-1596755095238-043a2b4d1e57?w=800'
-        ],
-        colors: [
-            { name: 'Rouge & Noir', value: 'bg-red-700' },
-            { name: 'Bleu & Blanc', value: 'bg-blue-600' },
-            { name: 'Vert & Noir', value: 'bg-green-700' }
-        ],
-        sizes: ['S', 'M', 'L', 'XL', 'XXL']
-    },
-    4: {
-        id: 4,
-        name: 'T-shirt à Manches Rayé',
-        category: 'T-shirts',
-        price: 130,
-        oldPrice: 160,
-        discount: '-30%',
-        rating: 4.5,
-        description: 'T-shirt rayé tendance avec manches longues. Design moderne et confortable, idéal pour la mi-saison. Matière douce au toucher.',
-        image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800',
-        images: [
-            'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800',
-            'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800',
-            'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800',
-            'https://images.unsplash.com/photo-1622445275463-afa2ab738c34?w=800'
-        ],
-        colors: [
-            { name: 'Noir & Blanc', value: 'bg-gray-800' },
-            { name: 'Bleu & Blanc', value: 'bg-blue-600' },
-            { name: 'Rouge & Blanc', value: 'bg-red-600' }
-        ],
-        sizes: ['XS', 'S', 'M', 'L', 'XL']
-    }
-};
-
 // Variables globales
 let currentProduct = null;
 let selectedColor = null;
 let selectedSize = null;
 let quantity = 1;
 let currentUser = null;
+let productStock = {};
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
@@ -184,17 +89,70 @@ function checkPurchasePermission(role) {
     }
 }
 
-// Charger le produit
-function loadProduct() {
+// Charger le produit depuis l'API
+async function loadProduct() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = parseInt(urlParams.get('id')) || 1;
     
-    currentProduct = products[productId];
-    
-    if (!currentProduct) {
-        currentProduct = products[1];
+    try {
+        const response = await fetch(`${API_URL}/products/${productId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            currentProduct = data.product;
+            productStock = data.product.stock || {};
+            displayProduct(currentProduct);
+            
+            // Vérifier si le produit est entièrement en rupture de stock
+            if (currentProduct.out_of_stock) {
+                showOutOfStockMessage();
+            }
+        } else {
+            console.error('Produit non trouvé');
+            // Fallback sur produit par défaut si l'API échoue
+            loadFallbackProduct(productId);
+        }
+    } catch (error) {
+        console.error('Erreur chargement produit:', error);
+        // Fallback sur produit par défaut si l'API échoue
+        loadFallbackProduct(productId);
     }
+}
+
+// Produits de secours (si l'API n'est pas encore configurée)
+function loadFallbackProduct(productId) {
+    const products = {
+        1: {
+            id: 1,
+            name: 'T-shirt à Col Dégradé',
+            category: 'T-shirts',
+            price: 212,
+            old_price: 242,
+            discount: '-20%',
+            rating: 4.5,
+            description: 'Ce T-shirt à col dégradé combine style et confort pour un look décontracté mais élégant. Fabriqué avec des matériaux de haute qualité, il offre une respirabilité exceptionnelle et une durabilité longue durée.',
+            image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800',
+            images: [
+                'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800',
+                'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800',
+                'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800',
+                'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800'
+            ],
+            colors: [
+                { name: 'Vert Olive', value: 'bg-green-700' },
+                { name: 'Noir', value: 'bg-gray-800' },
+                { name: 'Bleu Marine', value: 'bg-blue-900' }
+            ],
+            stock: {
+                'Vert Olive': { 'XS': 5, 'S': 10, 'M': 15, 'L': 8, 'XL': 3, 'XXL': 0 },
+                'Noir': { 'XS': 2, 'S': 5, 'M': 12, 'L': 10, 'XL': 7, 'XXL': 4 },
+                'Bleu Marine': { 'XS': 0, 'S': 8, 'M': 0, 'L': 15, 'XL': 5, 'XXL': 2 }
+            }
+        }
+    };
     
+    currentProduct = products[productId] || products[1];
+    productStock = currentProduct.stock || {};
     displayProduct(currentProduct);
 }
 
@@ -219,7 +177,7 @@ function displayProduct(product) {
     
     const thumbnails = document.querySelectorAll('.thumbnail-img img');
     thumbnails.forEach((thumb, index) => {
-        if (product.images[index]) {
+        if (product.images && product.images[index]) {
             thumb.src = product.images[index];
             thumb.alt = `${product.name} - Vue ${index + 1}`;
         }
@@ -228,8 +186,9 @@ function displayProduct(product) {
     // Prix
     document.getElementById('currentPrice').textContent = `$${product.price}`;
     
-    if (product.oldPrice) {
-        document.getElementById('oldPrice').textContent = `$${product.oldPrice}`;
+    if (product.old_price || product.oldPrice) {
+        const oldPrice = product.old_price || product.oldPrice;
+        document.getElementById('oldPrice').textContent = `$${oldPrice}`;
         document.getElementById('oldPrice').classList.remove('hidden');
     } else {
         document.getElementById('oldPrice').classList.add('hidden');
@@ -247,9 +206,6 @@ function displayProduct(product) {
     
     // Couleurs
     displayColors(product.colors);
-    
-    // Tailles
-    displaySizes(product.sizes);
 }
 
 // Afficher les étoiles de notation
@@ -290,6 +246,7 @@ function displayColors(colors) {
         if (index === 0) {
             button.classList.add('ring-2', 'ring-white');
             selectedColor = color.name;
+            updateSizesForColor(color.name);
         }
         
         colorOptions.appendChild(button);
@@ -298,26 +255,185 @@ function displayColors(colors) {
     document.getElementById('selectedColor').textContent = selectedColor;
 }
 
-// Afficher les tailles
-function displaySizes(sizes) {
+// Mettre à jour les tailles en fonction de la couleur et du stock
+function updateSizesForColor(colorName) {
     const sizeOptions = document.getElementById('sizeOptions');
-    sizeOptions.innerHTML = '';
+    const sizes = getAllSizes();
+    const colorStock = productStock[colorName] || {};
     
-    sizes.forEach((size, index) => {
+    sizeOptions.innerHTML = '';
+    let firstAvailableSize = null;
+    
+    sizes.forEach((size) => {
+        const stockQty = colorStock[size] || 0;
+        const isAvailable = stockQty > 0;
+        
         const button = document.createElement('button');
-        button.className = 'size-option px-6 py-3 rounded-full bg-dark-light hover:bg-primary hover:text-white text-gray-300 transition-all border border-dark-lighter';
+        button.className = 'size-option px-6 py-3 rounded-full transition-all border';
         button.dataset.size = size;
         button.textContent = size;
         
-        if (index === 3 || (sizes.length < 4 && index === 0)) {
-            button.classList.add('bg-primary', 'text-white');
-            selectedSize = size;
+        if (!isAvailable) {
+            // Taille en rupture de stock - grisée et non cliquable
+            button.className += ' bg-gray-800 text-gray-600 border-gray-700 cursor-not-allowed';
+            button.disabled = true;
+            button.title = 'Rupture de stock';
+        } else {
+            // Taille disponible
+            button.className += ' bg-dark-light hover:bg-primary hover:text-white text-gray-300 border-dark-lighter cursor-pointer';
+            
+            if (!firstAvailableSize) {
+                firstAvailableSize = size;
+                button.classList.add('bg-primary', 'text-white');
+                selectedSize = size;
+            }
+        }
+        
+        // Afficher le stock disponible
+        if (isAvailable) {
+            const stockBadge = document.createElement('span');
+            stockBadge.className = 'text-xs ml-1 stock-badge';
+            stockBadge.dataset.originalStock = stockQty;
+            stockBadge.textContent = `(${stockQty})`;
+            button.appendChild(stockBadge);
         }
         
         sizeOptions.appendChild(button);
     });
     
-    document.getElementById('selectedSize').textContent = selectedSize;
+    // Mettre à jour l'affichage de la taille sélectionnée
+    if (firstAvailableSize) {
+        document.getElementById('selectedSize').textContent = firstAvailableSize;
+        checkStockForSelection();
+    } else {
+        document.getElementById('selectedSize').textContent = 'Aucune disponible';
+        document.getElementById('addToCartBtn').disabled = true;
+        showNoStockMessage();
+    }
+}
+
+// Récupérer toutes les tailles possibles
+function getAllSizes() {
+    const allSizes = new Set();
+    
+    Object.values(productStock).forEach(colorStock => {
+        Object.keys(colorStock).forEach(size => allSizes.add(size));
+    });
+    
+    if (allSizes.size === 0) {
+        return ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    }
+    
+    // Trier les tailles dans l'ordre standard
+    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', '38'];
+    return Array.from(allSizes).sort((a, b) => {
+        const indexA = sizeOrder.indexOf(a);
+        const indexB = sizeOrder.indexOf(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+}
+
+// Vérifier le stock pour la sélection actuelle
+function checkStockForSelection() {
+    if (!selectedColor || !selectedSize) return;
+    
+    const stockQty = (productStock[selectedColor] && productStock[selectedColor][selectedSize]) || 0;
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const increaseBtn = document.getElementById('increaseQty');
+    
+    if (stockQty === 0) {
+        addToCartBtn.disabled = true;
+        showNoStockMessage();
+    } else {
+        if (currentUser && currentUser.role !== 'visiteur') {
+            addToCartBtn.disabled = false;
+        }
+        hideNoStockMessage();
+        
+        // Limiter la quantité max au stock disponible
+        if (quantity > stockQty) {
+            quantity = stockQty;
+            document.getElementById('quantity').textContent = quantity;
+        }
+        
+        // Désactiver le bouton + si on atteint le stock max
+        increaseBtn.disabled = quantity >= stockQty;
+    }
+    
+    // Mettre à jour l'affichage du stock restant
+    updateStockDisplay();
+}
+
+// Mettre à jour l'affichage du stock restant pour la taille sélectionnée
+function updateStockDisplay() {
+    if (!selectedSize) return;
+    
+    const sizeButtons = document.querySelectorAll('.size-option');
+    sizeButtons.forEach(button => {
+        const size = button.dataset.size;
+        const stockBadge = button.querySelector('.stock-badge');
+        
+        if (stockBadge) {
+            const originalStock = parseInt(stockBadge.dataset.originalStock);
+            
+            // Toujours afficher le stock disponible total
+            stockBadge.textContent = `(${originalStock})`;
+            
+            if (size === selectedSize) {
+                // Changer la couleur selon le stock disponible par rapport à la quantité
+                if (originalStock === 0) {
+                    stockBadge.className = 'text-xs ml-1 stock-badge text-red-400';
+                } else if (originalStock <= quantity) {
+                    stockBadge.className = 'text-xs ml-1 stock-badge text-orange-400';
+                } else if (originalStock < 5) {
+                    stockBadge.className = 'text-xs ml-1 stock-badge text-yellow-400';
+                } else {
+                    stockBadge.className = 'text-xs ml-1 stock-badge text-green-400';
+                }
+            } else {
+                // Pour les autres tailles, couleur par défaut
+                stockBadge.className = 'text-xs ml-1 stock-badge';
+            }
+        }
+    });
+}
+
+// Afficher message de rupture de stock
+function showNoStockMessage() {
+    const roleMessage = document.getElementById('roleMessage');
+    const roleMessageText = document.getElementById('roleMessageText');
+    
+    roleMessage.classList.remove('hidden', 'bg-yellow-500/10', 'border-yellow-500/30', 'text-yellow-400');
+    roleMessage.classList.add('bg-red-500/10', 'border-red-500/30', 'text-red-400');
+    roleMessageText.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Cette combinaison couleur/taille est en rupture de stock';
+}
+
+// Afficher message produit complet en rupture
+function showOutOfStockMessage() {
+    const roleMessage = document.getElementById('roleMessage');
+    const roleMessageText = document.getElementById('roleMessageText');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    
+    roleMessage.classList.remove('hidden', 'bg-yellow-500/10', 'border-yellow-500/30', 'text-yellow-400');
+    roleMessage.classList.add('bg-red-500/10', 'border-red-500/30', 'text-red-400');
+    roleMessageText.innerHTML = '<i class="fas fa-ban mr-2"></i>Ce produit est entièrement en rupture de stock';
+    addToCartBtn.disabled = true;
+}
+
+// Cacher message de rupture de stock
+function hideNoStockMessage() {
+    const roleMessage = document.getElementById('roleMessage');
+    
+    if (currentUser && currentUser.role === 'visiteur') {
+        // Remettre le message de connexion
+        roleMessage.classList.remove('bg-red-500/10', 'border-red-500/30', 'text-red-400');
+        roleMessage.classList.add('bg-yellow-500/10', 'border-yellow-500/30', 'text-yellow-400');
+        checkPurchasePermission('visiteur');
+    } else {
+        roleMessage.classList.add('hidden');
+    }
 }
 
 // Configuration des événements
@@ -331,18 +447,28 @@ function setupEventListeners() {
             e.target.classList.add('ring-2', 'ring-white');
             selectedColor = e.target.dataset.color;
             document.getElementById('selectedColor').textContent = selectedColor;
+            
+            // Mettre à jour les tailles disponibles pour cette couleur
+            updateSizesForColor(selectedColor);
         }
     });
     
     // Sélection de taille
     document.getElementById('sizeOptions').addEventListener('click', (e) => {
-        if (e.target.classList.contains('size-option')) {
-            document.querySelectorAll('.size-option').forEach(btn => {
+        if (e.target.classList.contains('size-option') && !e.target.disabled) {
+            document.querySelectorAll('.size-option:not([disabled])').forEach(btn => {
                 btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-dark-light', 'text-gray-300');
             });
+            e.target.classList.remove('bg-dark-light', 'text-gray-300');
             e.target.classList.add('bg-primary', 'text-white');
             selectedSize = e.target.dataset.size;
             document.getElementById('selectedSize').textContent = selectedSize;
+            
+            // Réinitialiser la quantité et vérifier le stock
+            quantity = 1;
+            document.getElementById('quantity').textContent = quantity;
+            checkStockForSelection();
         }
     });
     
@@ -351,18 +477,23 @@ function setupEventListeners() {
         if (quantity > 1) {
             quantity--;
             document.getElementById('quantity').textContent = quantity;
+            checkStockForSelection();
         }
     });
     
     document.getElementById('increaseQty').addEventListener('click', () => {
-        quantity++;
-        document.getElementById('quantity').textContent = quantity;
+        const stockQty = (productStock[selectedColor] && productStock[selectedColor][selectedSize]) || 0;
+        if (quantity < stockQty) {
+            quantity++;
+            document.getElementById('quantity').textContent = quantity;
+            checkStockForSelection();
+        }
     });
     
     // Miniatures
     document.querySelectorAll('.thumbnail-img').forEach((thumb, index) => {
         thumb.addEventListener('click', () => {
-            if (currentProduct && currentProduct.images[index]) {
+            if (currentProduct && currentProduct.images && currentProduct.images[index]) {
                 document.getElementById('mainImage').src = currentProduct.images[index];
             }
         });
@@ -389,6 +520,18 @@ async function handleAddToCart() {
         return;
     }
     
+    // Vérifier le stock une dernière fois
+    const stockQty = (productStock[selectedColor] && productStock[selectedColor][selectedSize]) || 0;
+    if (quantity > stockQty) {
+        alert(`Stock insuffisant. Seulement ${stockQty} article(s) disponible(s).`);
+        return;
+    }
+    
+    if (quantity <= 0) {
+        alert('Veuillez sélectionner une quantité valide.');
+        return;
+    }
+    
     const cartItem = {
         id: currentProduct.id,
         name: currentProduct.name,
@@ -399,10 +542,39 @@ async function handleAddToCart() {
         price: currentProduct.price
     };
     
-    // Récupérer le panier existant
+    // Essayer d'ajouter via l'API si connecté
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            const response = await fetch(`${API_URL}/products/cart/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    productId: currentProduct.id,
+                    colorName: selectedColor,
+                    size: selectedSize,
+                    quantity: quantity
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                alert(data.message || 'Erreur lors de l\'ajout au panier');
+                return;
+            }
+        } catch (error) {
+            console.error('Erreur API panier:', error);
+            // Continuer avec le stockage local en cas d'erreur
+        }
+    }
+    
+    // Aussi stocker dans localStorage pour compatibilité
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     
-    // Vérifier si le produit existe déjà avec les mêmes options
     const existingIndex = cart.findIndex(item => 
         item.id === cartItem.id && 
         item.color === cartItem.color && 
@@ -415,7 +587,6 @@ async function handleAddToCart() {
         cart.push(cartItem);
     }
     
-    // Sauvegarder le panier
     localStorage.setItem('cart', JSON.stringify(cart));
     
     // Animation de succès

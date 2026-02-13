@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - CRUD Produits & Stock - GG.SHOP</title>
+    <link rel="stylesheet" href="output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tab-active { border-bottom: 3px solid #9333ea; color: #9333ea; }
+        .tab-inactive { color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-dark">
+    <!-- Header -->
+    <header class="bg-dark/95 backdrop-blur-md border-b border-dark-lighter sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-12">
+                    <a href="index.html" class="text-3xl font-display font-bold text-white hover:text-primary transition-colors duration-300">GG.SHOP</a>
+                    
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a href="index.html" class="navbar-link">Accueil</a>
+                        <a href="admin-crud.html" class="navbar-link text-primary">Admin CRUD</a>
+                    </nav>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <div id="userButtons" class="flex items-center space-x-4">
+                            <div class="text-white">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span id="username" class="font-medium"></span>
+                                <span id="userRole" class="ml-2 px-2 py-1 text-xs rounded-full"></span>
+                            </div>
+                            <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Section -->
+    <section class="container mx-auto px-6 py-12 min-h-screen">
+        <div class="mb-8">
+            <h1 class="text-4xl md:text-5xl font-display font-bold text-white mb-4">
+                <i class="fas fa-database text-primary mr-4"></i>GESTION PRODUITS & STOCK
+            </h1>
+            <p class="text-gray-400">CRUD complet - Créer, Lire, Modifier, Supprimer des produits et gérer le stock</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-dark-light rounded-t-3xl">
+            <div class="flex border-b border-dark-lighter">
+                <button onclick="switchTab('list')" id="tab-list" class="tab-active flex-1 py-4 px-6 font-semibold transition-colors">
+                    <i class="fas fa-list mr-2"></i>Liste des Produits
+                </button>
+                <button onclick="switchTab('add')" id="tab-add" class="tab-inactive flex-1 py-4 px-6 font-semibold transition-colors">
+                    <i class="fas fa-plus-circle mr-2"></i>Ajouter Produit
+                </button>
+                <button onclick="switchTab('stock')" id="tab-stock" class="tab-inactive flex-1 py-4 px-6 font-semibold transition-colors">
+                    <i class="fas fa-boxes mr-2"></i>Gérer Stock
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center py-20">
+            <i class="fas fa-spinner fa-spin text-6xl text-primary mb-4"></i>
+            <p class="text-gray-400">Chargement...</p>
+        </div>
+
+        <!-- No Access Message -->
+        <div id="noAccess" class="hidden text-center py-20">
+            <i class="fas fa-lock text-8xl text-red-500 mb-6"></i>
+            <h2 class="text-2xl font-bold text-white mb-4">Accès Refusé</h2>
+            <p class="text-gray-400 mb-8">Vous devez être administrateur pour accéder à cette page.</p>
+            <a href="index.html" class="btn-primary inline-block">
+                <i class="fas fa-arrow-left mr-2"></i>Retour à l'accueil
+            </a>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tabContent" class="hidden">
+            <!-- Liste des Produits -->
+            <div id="content-list" class="bg-dark-light rounded-b-3xl p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">
+                        <i class="fas fa-box-open text-primary mr-2"></i>Produits
+                        <span id="productCount" class="text-gray-400 text-lg ml-2">(0)</span>
+                    </h2>
+                    <button onclick="switchTab('add')" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Nouveau Produit
+                    </button>
+                </div>
+                <div id="productsList" class="space-y-4">
+                    <!-- Products will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Ajouter/Modifier Produit -->
+            <div id="content-add" class="bg-dark-light rounded-b-3xl p-8 hidden">
+                <h2 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-plus-circle text-primary mr-2"></i>
+                    <span id="formTitle">Ajouter un Produit</span>
+                </h2>
+                
+                <form id="productForm" class="space-y-6">
+                    <input type="hidden" id="productId">
+                    
+                    <!-- Informations de base -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Nom du Produit *</label>
+                            <input type="text" id="productName" required 
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Catégorie *</label>
+                            <input type="text" id="productCategory" required placeholder="Ex: T-shirts, Jeans..."
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Prix -->
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Prix *</label>
+                            <input type="number" id="productPrice" required step="0.01" min="0"
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Ancien Prix</label>
+                            <input type="number" id="productOldPrice" step="0.01" min="0"
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Réduction</label>
+                            <input type="text" id="productDiscount" placeholder="Ex: -20%"
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Description et Note -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-white font-semibold mb-2">Description *</label>
+                            <textarea id="productDescription" required rows="4"
+                                      class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Note (0-5)</label>
+                            <input type="number" id="productRating" step="0.5" min="0" max="5" value="4.5"
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white font-semibold mb-2">Image URL *</label>
+                            <input type="url" id="productImage" required placeholder="https://..."
+                                   class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Images supplémentaires -->
+                    <div>
+                        <label class="block text-white font-semibold mb-2">Images Supplémentaires (URLs, une par ligne)</label>
+                        <textarea id="productImages" rows="3" placeholder="https://image1.jpg&#10;https://image2.jpg&#10;https://image3.jpg"
+                                  class="w-full bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Couleurs -->
+                    <div>
+                        <label class="block text-white font-semibold mb-2">Couleurs Disponibles *</label>
+                        <div id="colorsContainer" class="space-y-3">
+                            <div class="flex gap-3">
+                                <input type="text" placeholder="Nom couleur (ex: Noir)" class="flex-1 bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none color-name">
+                                <input type="text" placeholder="Classe CSS (ex: bg-gray-900)" class="flex-1 bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none color-class">
+                                <button type="button" onclick="removeColor(this)" class="bg-red-600 hover:bg-red-700 text-white px-4 rounded-lg">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" onclick="addColorField()" class="mt-3 text-primary hover:text-primary-dark">
+                            <i class="fas fa-plus-circle mr-2"></i>Ajouter une couleur
+                        </button>
+                    </div>
+
+                    <!-- Tailles et Stock Initial -->
+                    <div>
+                        <label class="block text-white font-semibold mb-2">Tailles et Stock Initial *</label>
+                        <div id="sizesContainer" class="space-y-3">
+                            <div class="flex gap-3">
+                                <input type="text" placeholder="Taille (ex: M)" class="w-24 bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none size-name">
+                                <input type="number" placeholder="Stock" min="0" value="0" class="flex-1 bg-dark text-white px-4 py-3 rounded-lg border border-dark-lighter focus:border-primary focus:outline-none size-stock">
+                                <button type="button" onclick="removeSize(this)" class="bg-red-600 hover:bg-red-700 text-white px-4 rounded-lg">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" onclick="addSizeField()" class="mt-3 text-primary hover:text-primary-dark">
+                            <i class="fas fa-plus-circle mr-2"></i>Ajouter une taille
+                        </button>
+                        <p class="text-xs text-gray-400 mt-2">Le stock initial sera appliqué pour toutes les couleurs</p>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">
+                            <i class="fas fa-save mr-2"></i>
+                            <span id="submitText">Créer le Produit</span>
+                        </button>
+                        <button type="button" onclick="cancelForm()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors">
+                            <i class="fas fa-times mr-2"></i>Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Gérer Stock -->
+            <div id="content-stock" class="bg-dark-light rounded-b-3xl p-8 hidden">
+                <h2 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-boxes text-primary mr-2"></i>Gérer le Stock
+                </h2>
+                <div id="stockList" class="space-y-4">
+                    <!-- Stock items will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal de confirmation de suppression -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-dark-light rounded-3xl p-8 max-w-md w-full">
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-4"></i>
+                <h3 class="text-2xl font-bold text-white mb-4">Confirmer la Suppression</h3>
+                <p class="text-gray-400 mb-6">Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.</p>
+                <div class="flex gap-4">
+                    <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors">
+                        <i class="fas fa-trash mr-2"></i>Supprimer
+                    </button>
+                    <button onclick="closeDeleteModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-crud.js"></script>
+</body>
+</html>

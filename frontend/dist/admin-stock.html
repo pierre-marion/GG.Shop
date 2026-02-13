@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestion Stock - GG.SHOP</title>
+    <link rel="stylesheet" href="output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark">
+    <!-- Header -->
+    <header class="bg-dark/95 backdrop-blur-md border-b border-dark-lighter sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-12">
+                    <a href="index.html" class="text-3xl font-display font-bold text-white hover:text-primary transition-colors duration-300">GG.SHOP</a>
+                    
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a href="index.html" class="navbar-link">Accueil</a>
+                        <a href="admin-stock.html" class="navbar-link text-primary">Admin Stock</a>
+                    </nav>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <div id="userButtons" class="flex items-center space-x-4">
+                            <div class="text-white">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span id="username" class="font-medium"></span>
+                                <span id="userRole" class="ml-2 px-2 py-1 text-xs rounded-full"></span>
+                            </div>
+                            <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Section -->
+    <section class="container mx-auto px-6 py-12 min-h-screen">
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-display font-bold text-white mb-4">
+                        <i class="fas fa-warehouse text-primary mr-4"></i>GESTION DU STOCK
+                    </h1>
+                    <p class="text-gray-400">Gérez les stocks de vos produits - Ajoutez ou retirez des articles</p>
+                </div>
+                <a href="admin-crud.html" class="bg-gradient-to-r from-primary to-primary-dark text-white font-bold px-8 py-4 rounded-xl hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 flex items-center justify-center gap-3 text-lg">
+                    <i class="fas fa-plus-circle text-2xl"></i>
+                    <span>Créer un Produit</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center py-20">
+            <i class="fas fa-spinner fa-spin text-6xl text-primary mb-4"></i>
+            <p class="text-gray-400">Chargement des produits...</p>
+        </div>
+
+        <!-- Products List -->
+        <div id="productsContainer" class="hidden space-y-6">
+            <!-- Products will be inserted here -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <i class="fas fa-box-open text-8xl text-gray-600 mb-6"></i>
+            <h2 class="text-2xl font-bold text-white mb-4">Aucun produit disponible</h2>
+            <p class="text-gray-400 mb-8">Commencez par créer votre premier produit !</p>
+            <a href="admin-crud.html" class="bg-gradient-to-r from-primary to-primary-dark text-white font-bold px-10 py-4 rounded-xl hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 inline-flex items-center gap-3 text-lg">
+                <i class="fas fa-plus-circle text-2xl"></i>
+                <span>Créer mon premier produit</span>
+            </a>
+        </div>
+
+        <!-- No Access Message -->
+        <div id="noAccess" class="hidden text-center py-20">
+            <i class="fas fa-lock text-8xl text-red-500 mb-6"></i>
+            <h2 class="text-2xl font-bold text-white mb-4">Accès Refusé</h2>
+            <p class="text-gray-400 mb-8">Vous devez être administrateur pour accéder à cette page.</p>
+            <a href="index.html" class="btn-primary inline-block">
+                <i class="fas fa-arrow-left mr-2"></i>Retour à l'accueil
+            </a>
+        </div>
+    </section>
+
+    <!-- Modal de modification du stock -->
+    <div id="stockModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-dark-light rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">
+                    <i class="fas fa-edit text-primary mr-2"></i>
+                    Modifier le Stock
+                </h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="modalContent" class="space-y-6">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark-light py-12 mt-20">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <p>&copy; 2026 GG.Shop. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script src="js/admin-stock.js"></script>
+</body>
+</html>
